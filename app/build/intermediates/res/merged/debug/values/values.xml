@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="address">Server Address:</string>
+    <string name="app">ToyVPN</string>
+    <string name="connect">Connect!</string>
+    <string name="connected">ToyVPN is connected!</string>
+    <string name="connecting">ToyVPN is connecting...</string>
+    <string name="disconnected">ToyVPN is disconnected!</string>
+    <string name="port">Server Port:</string>
+    <string name="secret">Shared Secret:</string>
+    <style name="item">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:singleLine">true</item>
+    </style>
+</resources>
