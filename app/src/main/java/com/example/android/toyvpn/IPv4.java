@@ -29,23 +29,23 @@ public class IPv4 {
         int c = sourceIPAddress[2] & 0xFF;
         int d = sourceIPAddress[3] & 0xFF;
 
-        StringBuilder string = new StringBuilder("Source IP: " +
+        StringBuilder string = new StringBuilder("S: " +
                 Integer.toString(a) + "." + Integer.toString(b) + "." +
                 Integer.toString(c) + "." + Integer.toString(d));
         a = destinationIPAddress[0] & 0xFF;
         b = destinationIPAddress[1] & 0xFF;
         c = destinationIPAddress[2] & 0xFF;
         d = destinationIPAddress[3] & 0xFF;
-        string.append(", Destination IP: " + Integer.toString(a) + "." +
+        string.append(", D: " + Integer.toString(a) + "." +
                 Integer.toString(b) + "." + Integer.toString(c) + "." +
                 Integer.toString(d));
 
-        string.append(", Type: ");
+        string.append(", ");
         if (protocol == 6) string.append("TCP");
         else if (protocol == 17) string.append("UDP");
         else string.append("Unknown");
 
-        string.append(", header: " + internetHeaderLength);
+        string.append(", hdr: " + internetHeaderLength);
 
         return string.toString();
     }

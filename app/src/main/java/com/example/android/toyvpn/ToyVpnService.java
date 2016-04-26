@@ -334,6 +334,8 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
     }
 
     String printPacket(ByteBuffer packet, int length) {
+        // Network Layer
+        // TODO check IPv6
         byte[] address = new byte[4];
         address[0] = packet.get(12);
         address[1] = packet.get(13);
@@ -358,6 +360,7 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
         sb.append(ipHeader.toString());
         int headerLength = ipHeader.getInternetHeaderLength();
 
+        // Transport layer(TCP, UDP)
         byte[] twoBytes = new byte[2];
         twoBytes[0] = packet.get(headerLength);
         twoBytes[1] = packet.get(headerLength + 1);
@@ -384,19 +387,47 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
             fourBytes[3] = packet.get(headerLength + 11);
             tcp.setAcknowledgement(convertBytesToInt(fourBytes));
 
-            tcp.setFIN(getFINinfo(packet.get(headerLength+13)));
-            tcp.setSYN(getSYNinfo(packet.get(headerLength+13)));
-            tcp.setRST(getRSTinfo(packet.get(headerLength+13)));
-            tcp.setPSH(getPSHinfo(packet.get(headerLength+13)));
-            tcp.setACK(getACKinfo(packet.get(headerLength+13)));
+            int tcpHeaderSize = getDataOffset(packet.get(headerLength + 12)) * 4;
+            tcp.setDataOffset(tcpHeaderSize);
+
+            tcp.setFIN(getFINinfo(packet.get(headerLength + 13)));
+            tcp.setSYN(getSYNinfo(packet.get(headerLength + 13)));
+            tcp.setRST(getRSTinfo(packet.get(headerLength + 13)));
+            tcp.setPSH(getPSHinfo(packet.get(headerLength + 13)));
+            tcp.setACK(getACKinfo(packet.get(headerLength + 13)));
 
             sb.append(tcp.toString());
+
+            ByteBuffer payload = ByteBuffer.allocate(length - headerLength -
+                    tcpHeaderSize);
+
+            for(int i = headerLength + tcpHeaderSize; i < length; i++) {
+                if (isPrintable(packet.get(i)))
+                    payload.put(packet.get(i));
+                else
+                   payload.put((byte)0x2E);
+            }
+            sb.append(new String(payload.array()));
         }
         else if(ipHeader.getProtocol() == 17) {
             UDP udp = new UDP();
             udp.setSourcePort(sourcePort);
             udp.setDestinationPort(destinationPort);
+
             sb.append(udp.toString());
+
+            ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
+
+            for(int i = headerLength + 8; i < length; i++) {
+                if (isPrintable(packet.get(i)))
+                    payload.put(packet.get(i));
+                else
+                    payload.put((byte)0x2E);
+            }
+
+            // TODO DNS check
+            sb.append(new String(payload.array()));
+
         }
 
         return sb.toString();
@@ -431,5 +462,13 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
 
     boolean getACKinfo(byte value) {
         return ((value >> 4) & 1) == 1;
+    }
+
+    int getDataOffset(byte value) {
+        return ((value >> 4) & 0xF);
+    }
+
+    boolean isPrintable(byte value) {
+        return value >= 0x20 && value <= 0x7E;
     }
 }
