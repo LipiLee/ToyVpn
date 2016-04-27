@@ -17,6 +17,14 @@ public class UDP {
         return sb.toString();
     }
 
+    public int getSourcePort() {
+        return sourcePort;
+    }
+
+    public int getDestinationPort() {
+        return destinationPort;
+    }
+
     public void setSourcePort(int sourcePort) {
         this.sourcePort = sourcePort;
     }
