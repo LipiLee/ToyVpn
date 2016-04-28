@@ -416,18 +416,21 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
 
             sb.append(udp.toString());
 
-            ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
-
-            for(int i = headerLength + 8; i < length; i++) {
-                if (isPrintable(packet.get(i)))
-                    payload.put(packet.get(i));
-                else
-                    payload.put((byte)0x2E);
-            }
-
             // TODO DNS check
-            sb.append(new String(payload.array()));
+            if (udp.getSourcePort() == 53 || udp.getDestinationPort() == 53) {
+                twoBytes[0] = packet.get(headerLength + 8);
+                twoBytes[1] = packet.get(headerLength + 9);
 
+            } else {
+                ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
+                for (int i = headerLength + 8; i < length; i++) {
+                    if (isPrintable(packet.get(i)))
+                        payload.put(packet.get(i));
+                    else
+                        payload.put((byte) 0x2E);
+                }
+                sb.append(new String(payload.array()));
+            }
         }
 
         return sb.toString();
