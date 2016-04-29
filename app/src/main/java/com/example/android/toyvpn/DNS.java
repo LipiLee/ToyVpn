@@ -1,14 +1,38 @@
 package com.example.android.toyvpn;
 
-import java.util.Vector;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by lipis on 2016-04-27.
  */
 public class DNS {
+    private byte[] transactionID;
     private String hostName;
-    private Vector <byte[]> ipAddresses;
+    private List<byte[]> ipAddresses;
 
+    public DNS() {
+        transactionID = new byte[2];
+    }
+
+    @Override
+    public String toString() {
+        return "DNS{" +
+                "transactionID=" + Arrays.toString(transactionID) +
+                ", hostName='" + hostName + '\'' +
+                ", ipAddresses=" + ipAddresses +
+                '}';
+    }
+
+    public byte[] getTransactionID() {
+        return transactionID;
+    }
+
+    public void setTransactionID(byte[] transactionID) {
+        for (int i = 0; i < transactionID.length; i++) {
+            this.transactionID[i] = transactionID[i];
+        }
+    }
     public String getHostName() {
         return hostName;
     }
@@ -17,7 +41,7 @@ public class DNS {
         this.hostName = hostName;
     }
 
-    public Vector<byte[]> getIpAddresses() {
+    public List<byte[]> getIpAddresses() {
         return ipAddresses;
     }
 

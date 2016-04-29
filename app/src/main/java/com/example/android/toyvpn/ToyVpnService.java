@@ -421,6 +421,7 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                 twoBytes[0] = packet.get(headerLength + 8);
                 twoBytes[1] = packet.get(headerLength + 9);
 
+
             } else {
                 ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
                 for (int i = headerLength + 8; i < length; i++) {
@@ -444,7 +445,7 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
             return ((digit[0] & 0xFF) << 24) | ((digit[1] & 0xFF) << 16) |
                     ((digit[2] & 0xFF) << 8) | (digit[3] & 0xFF);
         }
-        return 0;
+        throw new IllegalArgumentException("NOT supported byte length");
     }
 
     boolean getFINinfo(byte value) {
