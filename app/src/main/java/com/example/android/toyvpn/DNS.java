@@ -8,6 +8,11 @@ import java.util.List;
  */
 public class DNS {
     private byte[] transactionID;
+    private boolean response;
+    private int noOfQuestion;
+    private int noOfAnswer;
+    private int noOfAuthority;
+    private int noOfAdditional;
     private String hostName;
     private List<byte[]> ipAddresses;
 
@@ -33,6 +38,47 @@ public class DNS {
             this.transactionID[i] = transactionID[i];
         }
     }
+
+    public boolean isResponse() {
+        return response;
+    }
+
+    public void setResponse(boolean response) {
+        this.response = response;
+    }
+
+    public int getNoOfQuestion() {
+        return noOfQuestion;
+    }
+
+    public void setNoOfQuestion(int noOfQuestion) {
+        this.noOfQuestion = noOfQuestion;
+    }
+
+    public int getNoOfAnswer() {
+        return noOfAnswer;
+    }
+
+    public void setNoOfAnswer(int noOfAnswer) {
+        this.noOfAnswer = noOfAnswer;
+    }
+
+    public int getNoOfAuthority() {
+        return noOfAuthority;
+    }
+
+    public void setNoOfAuthority(int noOfAuthority) {
+        this.noOfAuthority = noOfAuthority;
+    }
+
+    public int getNoOfAdditional() {
+        return noOfAdditional;
+    }
+
+    public void setNoOfAdditional(int noOfAdditional) {
+        this.noOfAdditional = noOfAdditional;
+    }
+
     public String getHostName() {
         return hostName;
     }

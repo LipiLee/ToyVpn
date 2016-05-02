@@ -334,22 +334,22 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
     }
 
     String printPacket(ByteBuffer packet, int length) {
-        // Network Layer
-        // TODO check IPv6
-        byte[] address = new byte[4];
-        address[0] = packet.get(12);
-        address[1] = packet.get(13);
-        address[2] = packet.get(14);
-        address[3] = packet.get(15);
+        // Network Layer, IPv4 only
+        // TODO should support IPv6
+        byte[] fourBytes = new byte[4];
+        fourBytes[0] = packet.get(12);
+        fourBytes[1] = packet.get(13);
+        fourBytes[2] = packet.get(14);
+        fourBytes[3] = packet.get(15);
 
         IPv4 ipHeader = new IPv4();
-        ipHeader.setSourceIPAddress(address);
+        ipHeader.setSourceIPAddress(fourBytes);
 
-        address[0] = packet.get(16);
-        address[1] = packet.get(17);
-        address[2] = packet.get(18);
-        address[3] = packet.get(19);
-        ipHeader.setDestinationIPAddress(address);
+        fourBytes[0] = packet.get(16);
+        fourBytes[1] = packet.get(17);
+        fourBytes[2] = packet.get(18);
+        fourBytes[3] = packet.get(19);
+        ipHeader.setDestinationIPAddress(fourBytes);
 
         ipHeader.setProtocol(packet.get(9) & 0xFF);
 
@@ -374,7 +374,7 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
             tcp.setSourcePort(sourcePort);
             tcp.setDestinationPort(destinationPort);
             tcp.setSequence(packet.get(headerLength+4));
-            byte[] fourBytes = new byte[4];
+
             fourBytes[0] = packet.get(headerLength + 4);
             fourBytes[1] = packet.get(headerLength + 5);
             fourBytes[2] = packet.get(headerLength + 6);
@@ -405,6 +405,7 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                 if (isPrintable(packet.get(i)))
                     payload.put(packet.get(i));
                 else
+                  // print '.'
                    payload.put((byte)0x2E);
             }
             sb.append(new String(payload.array()));
@@ -420,7 +421,32 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
             if (udp.getSourcePort() == 53 || udp.getDestinationPort() == 53) {
                 twoBytes[0] = packet.get(headerLength + 8);
                 twoBytes[1] = packet.get(headerLength + 9);
+                DNS dns = new DNS();
+                dns.setTransactionID(twoBytes);
+                dns.setResponse(getBitValue(packet.get(headerLength + 10), 0));
 
+                twoBytes[0] = packet.get(headerLength + 12);
+                twoBytes[1] = packet.get(headerLength + 13);
+                dns.setNoOfQuestion(convertBytesToInt(twoBytes));
+
+                twoBytes[0] = packet.get(headerLength + 14);
+                twoBytes[1] = packet.get(headerLength + 15);
+                dns.setNoOfAnswer(convertBytesToInt(twoBytes));
+
+                twoBytes[0] = packet.get(headerLength + 16);
+                twoBytes[1] = packet.get(headerLength + 17);
+                dns.setNoOfAuthority(convertBytesToInt(twoBytes));
+
+                twoBytes[0] = packet.get(headerLength + 18);
+                twoBytes[1] = packet.get(headerLength + 19);
+                dns.setNoOfAdditional(convertBytesToInt(twoBytes));
+
+                
+                if (dns.isResponse()) {
+
+                } else {
+
+                }
 
             } else {
                 ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
@@ -474,5 +500,9 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
 
     boolean isPrintable(byte value) {
         return value >= 0x20 && value <= 0x7E;
+    }
+
+    boolean getBitValue(byte value, int index) {
+        return ((value >> (index - 7)) & 1) == 1;
     }
 }
