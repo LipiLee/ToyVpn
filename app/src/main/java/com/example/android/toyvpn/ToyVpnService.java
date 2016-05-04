@@ -441,16 +441,22 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                 twoBytes[1] = packet.get(headerLength + 19);
                 dns.setNoOfAdditional(convertBytesToInt(twoBytes));
 
-                int questions = dns.getNoOfQuestion();
-                StringBuilder[] addresses = new StringBuilder[questions];
-                int i = 0;
-                while (packet.get(headerLength + 20 + i) != 0) {
-                    int size = packet.get(headerLength + 20 + i);
-                    for (int j = 0; j < size; i++, j++) {
-                        addresses[0].append(packet.get(headerLength + 20 + ))
-                    }
+                //int questions = dns.getNoOfQuestion();
+                StringBuilder domainName = new StringBuilder();
 
+                for (int i = 0, size = -1; packet.get(headerLength + 20 + i) != 0; i++) {
+                    if (size == 0 || size == -1) {
+                        size = packet.get(headerLength + 20 + i);
+                        if (size == 0)
+                            domainName.append(".");
+                    }
+                    else {
+                        domainName.append(packet.get(headerLength + 20 + i));
+                        size--;
+                    }
                 }
+                dns.setHostName(domainName.toString());
+
                 //getHostnames(headerLength);
                 if (dns.isResponse()) {
 
