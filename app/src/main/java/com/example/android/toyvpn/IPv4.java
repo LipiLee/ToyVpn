@@ -1,15 +1,17 @@
 package com.example.android.toyvpn;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by Lipi on 16. 4. 22..
  */
 public class IPv4 {
     private int version;
     private int internetHeaderLength;
-    private int differentiatedServicesCodePoint;
-    private int explicitCongestionNotification;
-    private int totalLength;
-    private int identification;
+    private int dscp;
+    private int ecn;
+    private short totalLength;
+    private short id;
     private int flags;
     private int fragmentOffset;
     private int timeToLive;
@@ -17,10 +19,24 @@ public class IPv4 {
     private int headerChecksum;
     byte[] sourceIPAddress;
     byte[] destinationIPAddress;
+    ByteBuffer packet;
 
     public IPv4() {
         sourceIPAddress = new byte[4];
         destinationIPAddress = new byte[4];
+    }
+
+    public IPv4(ByteBuffer packet) {
+        this.packet = packet;
+        byte oneByte = packet.get();
+        version = (oneByte & 0xF0) >> 4;
+        internetHeaderLength = (oneByte & 0x0F) * 4;
+        oneByte = packet.get();
+        dscp = (oneByte & 0xFC) >> 2;
+        ecn = oneByte & 0x03;
+        totalLength = packet.getShort();
+        id = packet.getShort();
+
     }
 
     public String toString() {
@@ -56,30 +72,6 @@ public class IPv4 {
 
     public int getInternetHeaderLength() {
         return internetHeaderLength;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
-    }
-
-    public void setInternetHeaderLength(int internetHeaderLength) {
-        this.internetHeaderLength = internetHeaderLength;
-    }
-
-    public void setDifferentiatedServicesCodePoint(int differentiatedServicesCodePoint) {
-        this.differentiatedServicesCodePoint = differentiatedServicesCodePoint;
-    }
-
-    public void setExplicitCongestionNotification(int explicitCongestionNotification) {
-        this.explicitCongestionNotification = explicitCongestionNotification;
-    }
-
-    public void setTotalLength(int totalLength) {
-        this.totalLength = totalLength;
-    }
-
-    public void setIdentification(int identification) {
-        this.identification = identification;
     }
 
     public void setFlags(int flags) {

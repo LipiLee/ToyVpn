@@ -353,9 +353,6 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
 
         ipHeader.setProtocol(packet.get(9) & 0xFF);
 
-        ipHeader.setVersion((packet.get(0) & 0xF0) >> 4);
-        ipHeader.setInternetHeaderLength((packet.get(0) & 0x0F) * 4);
-
         StringBuilder sb = new StringBuilder();
         sb.append(ipHeader.toString());
         int headerLength = ipHeader.getInternetHeaderLength();
