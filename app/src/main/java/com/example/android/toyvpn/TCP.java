@@ -1,26 +1,48 @@
 package com.example.android.toyvpn;
 
-/**
- * Created by Lipi on 16. 4. 22..
- */
+import java.nio.ByteBuffer;
+
 public class TCP {
-    private int sourcePort;
-    private int destinationPort;
-    private int sequence;
-    private int acknowledgement;
-    private int dataOffset;
-    private boolean NS;
-    private boolean CWR;
-    private boolean ECE;
-    private boolean URG;
-    private boolean ACK;
-    private boolean PSH;
-    private boolean RST;
-    private boolean SYN;
-    private boolean FIN;
-    private int windowSize;
-    private int checksum;
-    private int urgentPointer;
+    private Integer sourcePort;
+    private Integer destinationPort;
+    private Long seq;
+    private Long ack;
+    private Byte dataOffset;
+    private Boolean NS;
+    private Boolean CWR;
+    private Boolean ECE;
+    private Boolean URG;
+    private Boolean ACK;
+    private Boolean PSH;
+    private Boolean RST;
+    private Boolean SYN;
+    private Boolean FIN;
+    private Integer windowSize;
+    private Integer checksum;
+    private Integer urgentPointer;
+
+    public TCP(ByteBuffer packet) {
+        sourcePort = packet.getShort() & 0xFFFF;
+        destinationPort = packet.getShort() & 0xFFFF;
+        seq = (long) (packet.getInt() & 0xFFFFFFFFL);
+        ack = (long) (packet.getInt() & 0xFFFFFFFFL);
+        byte aByte = (byte) (packet.get() & 0xFF);
+        dataOffset = (byte) (((aByte & 0xF0) >>> 4) * 4);
+        NS = (aByte & 0x01) == 1;
+        aByte = (byte) (packet.get() & 0xFF);
+        CWR = ((aByte >> 7) & 1) == 1;
+        ECE = ((aByte >> 6) & 1) == 1;
+        URG = ((aByte >> 5) & 1) == 1;
+        ACK = ((aByte >> 4) & 1) == 1;
+        PSH = ((aByte >> 3) & 1) == 1;
+        RST = ((aByte >> 2) & 1) == 1;
+        SYN = ((aByte >> 1) & 1) == 1;
+        FIN = (aByte & 1) == 1;
+        windowSize = (int) (packet.getShort() & 0xFFFF);
+        checksum = (int) (packet.getShort() & 0xFFFF);
+        urgentPointer = (int) (packet.getShort() & 0xFFFF);
+
+    }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -32,80 +54,11 @@ public class TCP {
         if (FIN) sb.append("F");
         if (RST) sb.append("R");
         // int(signed) is 32bit, so extend it to long(64bit) for printing
-        long unsignedFormat = sequence & 0xFFFF;
+        long unsignedFormat = seq & 0xFFFF;
         sb.append(", seq: " + unsignedFormat);
-        unsignedFormat = acknowledgement & 0xFFFF;
+        unsignedFormat = ack & 0xFFFF;
         sb.append(", ack: " + unsignedFormat);
         sb.append(")");
         return sb.toString();
     }
-
-    public void setSourcePort(int sourcePort) {
-        this.sourcePort = sourcePort;
-    }
-
-    public void setDestinationPort(int destinationPort) {
-        this.destinationPort = destinationPort;
-    }
-
-    public void setSequence(int sequence) {
-        this.sequence = sequence;
-    }
-
-    public void setAcknowledgement(int acknowledgement) {
-        this.acknowledgement = acknowledgement;
-    }
-
-    public void setDataOffset(int dataOffset) {
-        this.dataOffset = dataOffset;
-    }
-
-    public void setNS(boolean NS) {
-        this.NS = NS;
-    }
-
-    public void setCWR(boolean CWR) {
-        this.CWR = CWR;
-    }
-
-    public void setECE(boolean ECE) {
-        this.ECE = ECE;
-    }
-
-    public void setURG(boolean URG) {
-        this.URG = URG;
-    }
-
-    public void setACK(boolean ACK) {
-        this.ACK = ACK;
-    }
-
-    public void setPSH(boolean PSH) {
-        this.PSH = PSH;
-    }
-
-    public void setRST(boolean RST) {
-        this.RST = RST;
-    }
-
-    public void setSYN(boolean SYN) {
-        this.SYN = SYN;
-    }
-
-    public void setFIN(boolean FIN) {
-        this.FIN = FIN;
-    }
-
-    public void setWindowSize(int windowSize) {
-        this.windowSize = windowSize;
-    }
-
-    public void setChecksum(int checksum) {
-        this.checksum = checksum;
-    }
-
-    public void setUrgentPointer(int urgentPointer) {
-        this.urgentPointer = urgentPointer;
-    }
-
 }

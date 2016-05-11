@@ -1,43 +1,32 @@
 package com.example.android.toyvpn;
 
-/**
- * Created by Lipi on 16. 4. 24..
- */
+import java.nio.ByteBuffer;
+
 public class UDP {
-    int sourcePort;
-    int destinationPort;
-    int length;
-    int checksum;
+    private Integer sourcePort;
+    private Integer destinationPort;
+    private Integer length;
+    private Integer checksum;
+
+    private DNS dns;
+
+    public UDP(ByteBuffer packet) {
+        sourcePort = packet.getShort() & 0xFFFF;
+        destinationPort = packet.getShort() & 0xFFFF;
+        length = packet.getShort() & 0xFFFF;
+        checksum = packet.getShort() & 0xFFFF;
+
+        if (sourcePort.intValue() == 53 || destinationPort.intValue() == 53) {
+            dns = new DNS(packet);
+        }
+    }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("(sport: " + sourcePort + ", dport: " + destinationPort + ")");
+        sb.append("(sport: " + sourcePort.toString());
+        sb.append(", dport: " + destinationPort.toString() + ")");
 
         return sb.toString();
-    }
-
-    public int getSourcePort() {
-        return sourcePort;
-    }
-
-    public int getDestinationPort() {
-        return destinationPort;
-    }
-
-    public void setSourcePort(int sourcePort) {
-        this.sourcePort = sourcePort;
-    }
-
-    public void setDestinationPort(int destinationPort) {
-        this.destinationPort = destinationPort;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public void setChecksum(int checksum) {
-        this.checksum = checksum;
     }
 }
