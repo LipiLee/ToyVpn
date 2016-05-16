@@ -3,45 +3,48 @@ package com.example.android.toyvpn;
 import java.nio.ByteBuffer;
 
 public class TCP {
-    private Integer sourcePort;
-    private Integer destinationPort;
-    private Long seq;
-    private Long ack;
-    private Byte dataOffset;
-    private Boolean NS;
-    private Boolean CWR;
-    private Boolean ECE;
-    private Boolean URG;
-    private Boolean ACK;
-    private Boolean PSH;
-    private Boolean RST;
-    private Boolean SYN;
-    private Boolean FIN;
-    private Integer windowSize;
-    private Integer checksum;
-    private Integer urgentPointer;
+    private final Integer sourcePort;
+    private final Integer destinationPort;
+    private final Long seq;
+    private final Long ack;
+    private final Byte dataOffset;
+    private final Boolean NS;
+    private final Boolean CWR;
+    private final Boolean ECE;
+    private final Boolean URG;
+    private final Boolean ACK;
+    private final Boolean PSH;
+    private final Boolean RST;
+    private final Boolean SYN;
+    private final Boolean FIN;
+    private final Integer windowSize;
+    private final Integer checksum;
+    private final Integer urgentPointer;
+
+    private ByteBuffer packet;
 
     public TCP(ByteBuffer packet) {
-        sourcePort = packet.getShort() & 0xFFFF;
-        destinationPort = packet.getShort() & 0xFFFF;
-        seq = (long) (packet.getInt() & 0xFFFFFFFFL);
-        ack = (long) (packet.getInt() & 0xFFFFFFFFL);
-        byte aByte = (byte) (packet.get() & 0xFF);
-        dataOffset = (byte) (((aByte & 0xF0) >>> 4) * 4);
-        NS = (aByte & 0x01) == 1;
-        aByte = (byte) (packet.get() & 0xFF);
-        CWR = ((aByte >> 7) & 1) == 1;
-        ECE = ((aByte >> 6) & 1) == 1;
-        URG = ((aByte >> 5) & 1) == 1;
-        ACK = ((aByte >> 4) & 1) == 1;
-        PSH = ((aByte >> 3) & 1) == 1;
-        RST = ((aByte >> 2) & 1) == 1;
-        SYN = ((aByte >> 1) & 1) == 1;
-        FIN = (aByte & 1) == 1;
-        windowSize = (int) (packet.getShort() & 0xFFFF);
-        checksum = (int) (packet.getShort() & 0xFFFF);
-        urgentPointer = (int) (packet.getShort() & 0xFFFF);
+        this.packet = packet;
 
+        sourcePort = get16Bits();
+        destinationPort = get16Bits();
+        seq = get32Bits();
+        ack = get32Bits();
+        short aShort = get8Bits();
+        dataOffset = (byte) (((aShort & 0xF0) >>> 4) * 4);
+        NS = (aShort & 0x01) == 1;
+        aShort = get8Bits();
+        CWR = ((aShort >> 7) & 1) == 1;
+        ECE = ((aShort >> 6) & 1) == 1;
+        URG = ((aShort >> 5) & 1) == 1;
+        ACK = ((aShort >> 4) & 1) == 1;
+        PSH = ((aShort >> 3) & 1) == 1;
+        RST = ((aShort >> 2) & 1) == 1;
+        SYN = ((aShort >> 1) & 1) == 1;
+        FIN = (aShort & 1) == 1;
+        windowSize = get16Bits();
+        checksum = get16Bits();
+        urgentPointer = get16Bits();
     }
 
     public String toString() {
@@ -60,5 +63,17 @@ public class TCP {
         sb.append(", ack: " + unsignedFormat);
         sb.append(")");
         return sb.toString();
+    }
+
+    private short get8Bits() {
+        return (short) (packet.get() & 0xFF);
+    }
+
+    private int get16Bits() {
+        return packet.getShort() & 0xFFFF;
+    }
+
+    private long get32Bits() {
+        return (long) (packet.getInt() & 0xFFFFFFFFL);
     }
 }
