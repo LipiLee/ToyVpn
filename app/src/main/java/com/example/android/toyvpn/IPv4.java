@@ -78,6 +78,9 @@ public class IPv4 {
 
         string.append(", hdr: " + iHL);
 
+        if (protocol == 6) string.append(tcp.toString());
+        else if (protocol == 17) string.append(udp.toString());
+
         return string.toString();
     }
 

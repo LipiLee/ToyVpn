@@ -29,6 +29,8 @@ public class UDP {
 
         sb.append("(sport: " + sourcePort.toString());
         sb.append(", dport: " + destinationPort.toString() + ")");
+        if (sourcePort.intValue() == 53 || destinationPort.intValue() == 53)
+            sb.append(dns.toString());
 
         return sb.toString();
     }
