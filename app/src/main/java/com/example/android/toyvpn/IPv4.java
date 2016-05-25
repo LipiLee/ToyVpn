@@ -69,14 +69,14 @@ public class IPv4 {
 
         StringBuilder string = new StringBuilder("S: " + source.toString());
 
-        string.append(", D: " + destination.toString());
+        string.append(", D: ").append(destination.toString());
 
         string.append(", ");
         if (protocol == 6) string.append("TCP");
         else if (protocol == 17) string.append("UDP");
-        else string.append("Unknown(" + protocol + ")");
+        else string.append("Unknown(").append(protocol).append(")");
 
-        string.append(", hdr: " + iHL);
+        string.append(", hdr: ").append(iHL);
 
         if (protocol == 6) string.append(tcp.toString());
         else if (protocol == 17) string.append(udp.toString());

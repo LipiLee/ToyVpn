@@ -19,7 +19,7 @@ public class UDP {
         length = get16Bits();
         checksum = get16Bits();
 
-        if (sourcePort.intValue() == 53 || destinationPort.intValue() == 53) {
+        if (sourcePort == 53 || destinationPort == 53) {
             dns = new DNS(packet);
         }
     }
@@ -27,9 +27,9 @@ public class UDP {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("(sport: " + sourcePort.toString());
-        sb.append(", dport: " + destinationPort.toString() + ")");
-        if (sourcePort.intValue() == 53 || destinationPort.intValue() == 53)
+        sb.append("(sport: ").append(sourcePort.toString());
+        sb.append(", dport: ").append(destinationPort.toString()).append(")");
+        if (sourcePort == 53 || destinationPort == 53)
             sb.append(dns.toString());
 
         return sb.toString();

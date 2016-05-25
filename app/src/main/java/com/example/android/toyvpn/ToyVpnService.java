@@ -176,7 +176,9 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                 if (length > 0) {
                     // Write the outgoing packet to the tunnel.
                     packet.limit(length);
-                    Log.v(TAG, "[TX]" + printPacket(packet, length));
+//                    Log.v(TAG, "[TX]" + printPacket(packet, length));
+                    IPv4 iPv4 = new IPv4(packet);
+                    Log.v(TAG, "[TX] " + iPv4.toString());
                     tunnel.write(packet);
                     packet.clear();
 
@@ -195,7 +197,9 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                     // Ignore control messages, which start with zero.
                     if (packet.get(0) != 0) {
                         // Write the incoming packet to the output stream.
-                        Log.v(TAG, "[RX]" + printPacket(packet, length));
+//                        Log.v(TAG, "[RX]" + printPacket(packet, length));
+                        IPv4 iPv4 = new IPv4(packet);
+                        Log.v(TAG, "[RX] " + iPv4.toString());
                         out.write(packet.array(), 0, length);
                     }
                     packet.clear();
@@ -333,148 +337,145 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
         Log.i(TAG, "New interface: " + parameters);
     }
 
-    String printPacket(ByteBuffer packet, int length) {
-        // Network Layer, IPv4 only
-        // TODO should support IPv6
-        byte[] fourBytes = new byte[4];
-        fourBytes[0] = packet.get(12);
-        fourBytes[1] = packet.get(13);
-        fourBytes[2] = packet.get(14);
-        fourBytes[3] = packet.get(15);
-
-        IPv4 ipHeader = new IPv4();
-        ipHeader.setSourceIPAddress(fourBytes);
-
-        fourBytes[0] = packet.get(16);
-        fourBytes[1] = packet.get(17);
-        fourBytes[2] = packet.get(18);
-        fourBytes[3] = packet.get(19);
-        ipHeader.setDestinationIPAddress(fourBytes);
-
-        ipHeader.setProtocol(packet.get(9) & 0xFF);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(ipHeader.toString());
-        int headerLength = ipHeader.getInternetHeaderLength();
-
-        // Transport layer(TCP, UDP)
-        byte[] twoBytes = new byte[2];
-        twoBytes[0] = packet.get(headerLength);
-        twoBytes[1] = packet.get(headerLength + 1);
-        int sourcePort = convertBytesToInt(twoBytes);
-
-        twoBytes[0] = packet.get(headerLength + 2);
-        twoBytes[1] = packet.get(headerLength + 3);
-        int destinationPort = convertBytesToInt(twoBytes);
-        if (ipHeader.getProtocol() == 6) {
-            TCP tcp = new TCP();
-            tcp.setSourcePort(sourcePort);
-            tcp.setDestinationPort(destinationPort);
-            tcp.setSequence(packet.get(headerLength+4));
-
-            fourBytes[0] = packet.get(headerLength + 4);
-            fourBytes[1] = packet.get(headerLength + 5);
-            fourBytes[2] = packet.get(headerLength + 6);
-            fourBytes[3] = packet.get(headerLength + 7);
-            tcp.setSequence(convertBytesToInt(fourBytes));
-
-            fourBytes[0] = packet.get(headerLength + 8);
-            fourBytes[1] = packet.get(headerLength + 9);
-            fourBytes[2] = packet.get(headerLength + 10);
-            fourBytes[3] = packet.get(headerLength + 11);
-            tcp.setAcknowledgement(convertBytesToInt(fourBytes));
-
-            int tcpHeaderSize = getDataOffset(packet.get(headerLength + 12)) * 4;
-            tcp.setDataOffset(tcpHeaderSize);
-
-            tcp.setFIN(getFINinfo(packet.get(headerLength + 13)));
-            tcp.setSYN(getSYNinfo(packet.get(headerLength + 13)));
-            tcp.setRST(getRSTinfo(packet.get(headerLength + 13)));
-            tcp.setPSH(getPSHinfo(packet.get(headerLength + 13)));
-            tcp.setACK(getACKinfo(packet.get(headerLength + 13)));
-
-            sb.append(tcp.toString());
-
-            ByteBuffer payload = ByteBuffer.allocate(length - headerLength -
-                    tcpHeaderSize);
-
-            for(int i = headerLength + tcpHeaderSize; i < length; i++) {
-                if (isPrintable(packet.get(i)))
-                    payload.put(packet.get(i));
-                else
-                  // print '.'
-                   payload.put((byte)0x2E);
-            }
-            sb.append(new String(payload.array()));
-        }
-        else if(ipHeader.getProtocol() == 17) {
-            UDP udp = new UDP();
-            udp.setSourcePort(sourcePort);
-            udp.setDestinationPort(destinationPort);
-
-            sb.append(udp.toString());
-
-            // TODO DNS check
-            if (udp.getSourcePort() == 53 || udp.getDestinationPort() == 53) {
-                twoBytes[0] = packet.get(headerLength + 8);
-                twoBytes[1] = packet.get(headerLength + 9);
-                DNS dns = new DNS();
-                dns.setTransactionID(twoBytes);
-                dns.setResponse(getBitValue(packet.get(headerLength + 10), 0));
-
-                twoBytes[0] = packet.get(headerLength + 12);
-                twoBytes[1] = packet.get(headerLength + 13);
-                dns.setNoOfQuestion(convertBytesToInt(twoBytes));
-
-                twoBytes[0] = packet.get(headerLength + 14);
-                twoBytes[1] = packet.get(headerLength + 15);
-                dns.setNoOfAnswer(convertBytesToInt(twoBytes));
-
-                twoBytes[0] = packet.get(headerLength + 16);
-                twoBytes[1] = packet.get(headerLength + 17);
-                dns.setNoOfAuthority(convertBytesToInt(twoBytes));
-
-                twoBytes[0] = packet.get(headerLength + 18);
-                twoBytes[1] = packet.get(headerLength + 19);
-                dns.setNoOfAdditional(convertBytesToInt(twoBytes));
-
-                //int questions = dns.getNoOfQuestion();
-                StringBuilder domainName = new StringBuilder();
-
-                for (int i = 0, size = -1; packet.get(headerLength + 20 + i) != 0; i++) {
-                    if (size == 0 || size == -1) {
-                        size = packet.get(headerLength + 20 + i);
-                        if (size == 0)
-                            domainName.append(".");
-                    }
-                    else {
-                        domainName.append(packet.get(headerLength + 20 + i));
-                        size--;
-                    }
-                }
-                dns.setHostName(domainName.toString());
-
-                //getHostnames(headerLength);
-                if (dns.isResponse()) {
-
-                } else {
-
-                }
-
-            } else {
-                ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
-                for (int i = headerLength + 8; i < length; i++) {
-                    if (isPrintable(packet.get(i)))
-                        payload.put(packet.get(i));
-                    else
-                        payload.put((byte) 0x2E);
-                }
-                sb.append(new String(payload.array()));
-            }
-        }
-
-        return sb.toString();
-    }
+//    String printPacket(ByteBuffer packet, int length) {
+//        // Network Layer, IPv4 only
+//        // TODO should support IPv6
+//        byte[] fourBytes = new byte[4];
+//        fourBytes[0] = packet.get(12);
+//        fourBytes[1] = packet.get(13);
+//        fourBytes[2] = packet.get(14);
+//        fourBytes[3] = packet.get(15);
+//
+//        fourBytes[0] = packet.get(16);
+//        fourBytes[1] = packet.get(17);
+//        fourBytes[2] = packet.get(18);
+//        fourBytes[3] = packet.get(19);
+//
+//
+//
+//
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(ipHeader.toString());
+//        int headerLength = ipHeader.getiHL();
+//
+//        // Transport layer(TCP, UDP)
+//        byte[] twoBytes = new byte[2];
+//        twoBytes[0] = packet.get(headerLength);
+//        twoBytes[1] = packet.get(headerLength + 1);
+//        int sourcePort = convertBytesToInt(twoBytes);
+//
+//        twoBytes[0] = packet.get(headerLength + 2);
+//        twoBytes[1] = packet.get(headerLength + 3);
+//        int destinationPort = convertBytesToInt(twoBytes);
+//        if (ipHeader.getProtocol() == 6) {
+//            TCP tcp = new TCP();
+//            tcp.setSourcePort(sourcePort);
+//            tcp.setDestinationPort(destinationPort);
+//            tcp.setSeq(packet.get(headerLength+4));
+//
+//            fourBytes[0] = packet.get(headerLength + 4);
+//            fourBytes[1] = packet.get(headerLength + 5);
+//            fourBytes[2] = packet.get(headerLength + 6);
+//            fourBytes[3] = packet.get(headerLength + 7);
+//            tcp.setSeq(convertBytesToInt(fourBytes));
+//
+//            fourBytes[0] = packet.get(headerLength + 8);
+//            fourBytes[1] = packet.get(headerLength + 9);
+//            fourBytes[2] = packet.get(headerLength + 10);
+//            fourBytes[3] = packet.get(headerLength + 11);
+//            tcp.setAck(convertBytesToInt(fourBytes));
+//
+//            int tcpHeaderSize = getDataOffset(packet.get(headerLength + 12)) * 4;
+//            tcp.setDataOffset(tcpHeaderSize);
+//
+//            tcp.setFIN(getFINinfo(packet.get(headerLength + 13)));
+//            tcp.setSYN(getSYNinfo(packet.get(headerLength + 13)));
+//            tcp.setRST(getRSTinfo(packet.get(headerLength + 13)));
+//            tcp.setPSH(getPSHinfo(packet.get(headerLength + 13)));
+//            tcp.setACK(getACKinfo(packet.get(headerLength + 13)));
+//
+//            sb.append(tcp.toString());
+//
+//            ByteBuffer payload = ByteBuffer.allocate(length - headerLength -
+//                    tcpHeaderSize);
+//
+//            for(int i = headerLength + tcpHeaderSize; i < length; i++) {
+//                if (isPrintable(packet.get(i)))
+//                    payload.put(packet.get(i));
+//                else
+//                  // print '.'
+//                   payload.put((byte)0x2E);
+//            }
+//            sb.append(new String(payload.array()));
+//        }
+//        else if(ipHeader.getProtocol() == 17) {
+//            UDP udp = new UDP();
+//            udp.setSourcePort(sourcePort);
+//            udp.setDestinationPort(destinationPort);
+//
+//            sb.append(udp.toString());
+//
+//            // TODO DNS check
+//            if (udp.getSourcePort() == 53 || udp.getDestinationPort() == 53) {
+//                twoBytes[0] = packet.get(headerLength + 8);
+//                twoBytes[1] = packet.get(headerLength + 9);
+//                DNS dns = new DNS();
+//                dns.setTransactionID(twoBytes);
+//                dns.setResponse(getBitValue(packet.get(headerLength + 10), 0));
+//
+//                twoBytes[0] = packet.get(headerLength + 12);
+//                twoBytes[1] = packet.get(headerLength + 13);
+//                dns.setNoOfQuestion(convertBytesToInt(twoBytes));
+//
+//                twoBytes[0] = packet.get(headerLength + 14);
+//                twoBytes[1] = packet.get(headerLength + 15);
+//                dns.setNoOfAnswer(convertBytesToInt(twoBytes));
+//
+//                twoBytes[0] = packet.get(headerLength + 16);
+//                twoBytes[1] = packet.get(headerLength + 17);
+//                dns.setNoOfAuthority(convertBytesToInt(twoBytes));
+//
+//                twoBytes[0] = packet.get(headerLength + 18);
+//                twoBytes[1] = packet.get(headerLength + 19);
+//                dns.setNoOfAdditional(convertBytesToInt(twoBytes));
+//
+//                //int questions = dns.getNoOfQuestion();
+//                StringBuilder domainName = new StringBuilder();
+//
+//                for (int i = 0, size = -1; packet.get(headerLength + 20 + i) != 0; i++) {
+//                    if (size == 0 || size == -1) {
+//                        size = packet.get(headerLength + 20 + i);
+//                        if (size == 0)
+//                            domainName.append(".");
+//                    }
+//                    else {
+//                        domainName.append(packet.get(headerLength + 20 + i));
+//                        size--;
+//                    }
+//                }
+//                dns.setHostName(domainName.toString());
+//
+//                //getHostnames(headerLength);
+//                if (dns.isResponse()) {
+//
+//                } else {
+//
+//                }
+//
+//            } else {
+//                ByteBuffer payload = ByteBuffer.allocate(length - headerLength - 8);
+//                for (int i = headerLength + 8; i < length; i++) {
+//                    if (isPrintable(packet.get(i)))
+//                        payload.put(packet.get(i));
+//                    else
+//                        payload.put((byte) 0x2E);
+//                }
+//                sb.append(new String(payload.array()));
+//            }
+//        }
+//
+//        return sb.toString();
+//    }
 
     int convertBytesToInt(byte[] digit) {
         if (digit.length == 2) {

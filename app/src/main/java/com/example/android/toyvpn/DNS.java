@@ -1,10 +1,13 @@
 package com.example.android.toyvpn;
 
+import android.util.Log;
+
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.List;
 
 public class DNS {
+    private static final String TAG = "DNS";
     private Integer transactionID;
     private Boolean response;
     private Short opCode;
@@ -16,7 +19,7 @@ public class DNS {
     private Integer noOfAuthority;
     private Integer noOfAdditional;
     private Question[] queries;
-    private List<InetAddress> ipAddresses;
+    private Answer[] answers;
 
     private ByteBuffer packet;
 
@@ -33,9 +36,10 @@ public class DNS {
     }
 
     class Answer extends Question {
-        Integer ttl;
+        Long ttl;
         Integer length;
         InetAddress address;
+        String canonicalName;
     }
 
     public DNS(ByteBuffer packet) {
@@ -63,15 +67,48 @@ public class DNS {
             queries[i].queryClass = get16Bits();
         }
 
-
+        if (noOfAnswer > 0) {
+            answers = new Answer[noOfAnswer];
+            for (int i = 0; i < noOfQuestion; i++) {
+                answers[i].hostname = getHostname();
+                answers[i].type = get16Bits();
+                answers[i].queryClass = get16Bits();
+                answers[i].ttl = get32Bits();
+                answers[i].length = get16Bits();
+                switch (answers[i].type) {
+                    case 1: // Host Address
+                        try {
+                            answers[i].address = getIPAddress();
+                        } catch (UnknownHostException e) {
+                            Log.e(TAG, e.toString());
+                        }
+                        break;
+                    case 5: // CNAME
+                        answers[i].canonicalName = getHostname();
+                        break;
+                }
+            }
+        }
     }
 
     @Override
     public String toString() {
-        return "DNS{" +
-                "transactionID=" + transactionID.toString() +
-                ", ipAddresses=" + ipAddresses +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("DNS{");
+
+        for (Question query : queries) {
+            sb.append(query.hostname);
+        }
+        sb.append(" ");
+
+        for (Answer answer : answers) {
+            if (answer.type == 1) {
+                sb.append(answer.address.getHostAddress());
+            }
+        }
+        sb.append("}");
+
+        return sb.toString();
     }
 
     private short get8Bits() {
@@ -83,7 +120,7 @@ public class DNS {
     }
 
     private long get32Bits() {
-        return (long) (packet.getInt() & 0xFFFFFFFFL);
+        return packet.getInt() & 0xFFFFFFFFL;
     }
 
     private String getHostname() {
@@ -108,7 +145,7 @@ public class DNS {
                     }
                 }
             } else {
-                hostname.append(c);
+                hostname.append((char)c);
                 len--;
             }
         } while (true);
@@ -131,5 +168,17 @@ public class DNS {
 
     private boolean isPointer(short value) {
         return (((value & 0xFF) >> 6) & 3) == 3;
+    }
+
+    private InetAddress getIPAddress() throws UnknownHostException {
+        byte[] fourBytes = new byte[4];
+        for (int i = 0; i < fourBytes.length; i++)
+            fourBytes[i] = (byte) (packet.get() & 0xFF);
+
+        try {
+            return InetAddress.getByAddress(fourBytes);
+        } catch (UnknownHostException e) {
+            throw new UnknownHostException("IP address is not valid.");
+        }
     }
 }

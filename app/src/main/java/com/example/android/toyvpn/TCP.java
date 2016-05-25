@@ -50,7 +50,8 @@ public class TCP {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("(sport: " + sourcePort + ", dport: " + destinationPort + " ");
+        sb.append("(sport: ").append(sourcePort).append(", dport: ");
+        sb.append(destinationPort).append(" ");
         if (SYN) sb.append("S");
         if (ACK) sb.append("A");
         if (PSH) sb.append("P");
@@ -58,9 +59,9 @@ public class TCP {
         if (RST) sb.append("R");
         // int(signed) is 32bit, so extend it to long(64bit) for printing
         long unsignedFormat = seq & 0xFFFF;
-        sb.append(", seq: " + unsignedFormat);
+        sb.append(", seq: ").append(unsignedFormat);
         unsignedFormat = ack & 0xFFFF;
-        sb.append(", ack: " + unsignedFormat);
+        sb.append(", ack: ").append(unsignedFormat);
         sb.append(")");
         return sb.toString();
     }
@@ -74,6 +75,6 @@ public class TCP {
     }
 
     private long get32Bits() {
-        return (long) (packet.getInt() & 0xFFFFFFFFL);
+        return packet.getInt() & 0xFFFFFFFFL;
     }
 }
