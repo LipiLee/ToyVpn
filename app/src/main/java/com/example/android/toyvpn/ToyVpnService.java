@@ -177,7 +177,8 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                     // Write the outgoing packet to the tunnel.
                     packet.limit(length);
 //                    Log.v(TAG, "[TX]" + printPacket(packet, length));
-                    IPv4 iPv4 = new IPv4(packet);
+                    ByteBuffer duplicatedPacket = packet.duplicate();
+                    IPv4 iPv4 = new IPv4(duplicatedPacket);
                     Log.v(TAG, "[TX] " + iPv4.toString());
                     tunnel.write(packet);
                     packet.clear();
@@ -198,7 +199,12 @@ public class ToyVpnService extends VpnService implements Handler.Callback, Runna
                     if (packet.get(0) != 0) {
                         // Write the incoming packet to the output stream.
 //                        Log.v(TAG, "[RX]" + printPacket(packet, length));
-                        IPv4 iPv4 = new IPv4(packet);
+                        ByteBuffer duplicatedPacket = packet.duplicate();
+
+                        // ByteBuffer's position should move to 0
+                        duplicatedPacket.rewind();
+
+                        IPv4 iPv4 = new IPv4(duplicatedPacket);
                         Log.v(TAG, "[RX] " + iPv4.toString());
                         out.write(packet.array(), 0, length);
                     }

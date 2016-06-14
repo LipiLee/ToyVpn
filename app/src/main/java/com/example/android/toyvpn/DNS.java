@@ -5,6 +5,8 @@ import android.util.Log;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DNS {
     private static final String TAG = "DNS";
@@ -18,8 +20,8 @@ public class DNS {
     private Integer noOfAnswer;
     private Integer noOfAuthority;
     private Integer noOfAdditional;
-    private Question[] queries;
-    private Answer[] answers;
+    private List<Question> queries;
+    private List<Answer> answers;
 
     private ByteBuffer packet;
 
@@ -27,7 +29,7 @@ public class DNS {
      * Get the value in ByteBuffer deciding whether its position is moved or not
      */
     private boolean indexMode;
-    private int index;
+    private int indexPacket;
 
     class Question {
         String hostname;
@@ -59,34 +61,39 @@ public class DNS {
         noOfAuthority = get16Bits();
         noOfAdditional = get16Bits();
 
-        queries = new Question[noOfQuestion];
+        queries = new ArrayList<Question>();
 
         for (int i = 0; i < noOfQuestion; i++) {
-            queries[i].hostname = getHostname();
-            queries[i].type = get16Bits();
-            queries[i].queryClass = get16Bits();
+            Question temp = new Question();
+            temp.hostname = getHostname();
+            temp.type = get16Bits();
+            temp.queryClass = get16Bits();
+            queries.add(temp);
         }
 
+        answers = new ArrayList<Answer>();
+
         if (noOfAnswer > 0) {
-            answers = new Answer[noOfAnswer];
             for (int i = 0; i < noOfQuestion; i++) {
-                answers[i].hostname = getHostname();
-                answers[i].type = get16Bits();
-                answers[i].queryClass = get16Bits();
-                answers[i].ttl = get32Bits();
-                answers[i].length = get16Bits();
-                switch (answers[i].type) {
+                Answer temp = new Answer();
+                temp.hostname = getHostname();
+                temp.type = get16Bits();
+                temp.queryClass = get16Bits();
+                temp.ttl = get32Bits();
+                temp.length = get16Bits();
+                switch (temp.type) {
                     case 1: // Host Address
                         try {
-                            answers[i].address = getIPAddress();
+                            temp.address = getIPAddress();
                         } catch (UnknownHostException e) {
                             Log.e(TAG, e.toString());
                         }
                         break;
                     case 5: // CNAME
-                        answers[i].canonicalName = getHostname();
+                        temp.canonicalName = getHostname();
                         break;
                 }
+                answers.add(temp);
             }
         }
     }
@@ -126,8 +133,9 @@ public class DNS {
     private String getHostname() {
         short c;
         int len = -1;
-        StringBuilder hostname = new StringBuilder();
+
         indexMode = false;
+        StringBuilder sb = new StringBuilder();
 
         do {
             c = get8BitsStream();
@@ -137,28 +145,28 @@ public class DNS {
                     if (isPointer(c)) {
                         short ch = get8BitsStream();
                         int pointer = ((c & 0x3F) << 8) + ch;
-                        index = 20 + 8 + pointer;
+                        indexPacket = 20 + 8 + pointer;
                         if (!indexMode) indexMode = true;
                     } else {
-                        if (len == 0) hostname.append(".");
+                        if (len == 0) sb.append(".");
                         len = c;
                     }
                 }
             } else {
-                hostname.append((char)c);
+                sb.append((char)c);
                 len--;
             }
         } while (true);
 
-        return hostname.toString();
+        return sb.toString();
     }
 
     private short get8BitsStream() {
         short ch;
 
         if (indexMode) {
-            ch = packet.get(index);
-            index++;
+            ch = packet.get(indexPacket);
+            indexPacket++;
         } else {
             ch = get8Bits();
         }
