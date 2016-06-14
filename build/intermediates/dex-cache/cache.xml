@@ -1,19 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<items version="2" >
-
-    <item
-        jar="/Users/Lipi/StudioProjects/ToyVpn1/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
-        jumboMode="true"
-        revision="23.0.3"
-        sha1="987867cf8d6f309c2bcc3a7a40606c5aae11f3c5">
-        <dex dex="/Users/Lipi/StudioProjects/ToyVpn1/app/build/intermediates/transforms/dex/debug/folders/1000/10/instant-run_88bbf66e7996d127d5bf900c999e66ec0aec0e84/classes.dex" />
-    </item>
-    <item
-        jar="/Users/Lipi/StudioProjects/ToyVpn1/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
-        jumboMode="true"
-        revision="23.0.3"
-        sha1="3039cd0cdf4dcc40e447779b860aa2679a43acb7">
-        <dex dex="/Users/Lipi/StudioProjects/ToyVpn1/app/build/intermediates/transforms/dex/debug/folders/1000/10/instant-run-bootstrap_adf9916f3c471e40c5da0da9f9937ac7c3e1dcf2/classes.dex" />
-    </item>
-
-</items>
+<items version="2" />
