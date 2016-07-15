@@ -3,6 +3,8 @@ package com.example.android.toyvpn;
 import java.nio.ByteBuffer;
 
 public class TCP {
+    private static final String TAG = "TCP";
+
     private final Integer sourcePort;
     private final Integer destinationPort;
     private final Long seq;

@@ -3,6 +3,8 @@ package com.example.android.toyvpn;
 import java.nio.ByteBuffer;
 
 public class UDP {
+    private static final String TAG = "UDP";
+
     private final Integer sourcePort;
     private final Integer destinationPort;
     private final Integer length;
@@ -19,7 +21,7 @@ public class UDP {
         length = get16Bits();
         checksum = get16Bits();
 
-        if (sourcePort == 53 || destinationPort == 53) {
+        if (isDNS()) {
             dns = new DNS(packet);
         }
     }
@@ -37,5 +39,13 @@ public class UDP {
 
     private int get16Bits() {
         return packet.getShort() & 0xFFFF;
+    }
+
+    boolean isDNS() {
+        return sourcePort == 53 || destinationPort == 53;
+    }
+
+    public DNS getDns() {
+        return dns;
     }
 }

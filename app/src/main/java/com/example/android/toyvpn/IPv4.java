@@ -8,6 +8,8 @@ import java.nio.ByteBuffer;
 
 public class IPv4 {
     private static final String TAG = "IPv4";
+    public static final int TCP = 6;
+    public static final int UDP = 17;
 
     private final Byte version;
     private final Byte iHL;
@@ -58,9 +60,9 @@ public class IPv4 {
             Log.e(TAG, e.toString());
         }
 
-        if (protocol == 6) {
+        if (protocol == TCP) {
             tcp = new TCP(packet);
-        } else if (protocol == 17) {
+        } else if (protocol == UDP) {
             udp = new UDP(packet);
         }
     }
@@ -102,5 +104,25 @@ public class IPv4 {
         } catch (UnknownHostException e) {
             throw new UnknownHostException("IP address is not valid.");
         }
+    }
+
+    public InetAddress getDestination() {
+        return destination;
+    }
+
+    public Short getProtocol() {
+        return protocol;
+    }
+
+    public TCP getTcp() {
+        return tcp;
+    }
+
+    public UDP getUdp() {
+        return udp;
+    }
+
+    public ByteBuffer getPacket() {
+        return packet;
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 public class DNS {
     private static final String TAG = "DNS";
+
     private Integer transactionID;
     private Boolean response;
     private Short opCode;
@@ -32,16 +33,72 @@ public class DNS {
     private int indexPacket;
 
     class Question {
-        String hostname;
-        Integer type;
-        Integer queryClass;
+        private String hostname;
+        private Integer type;
+        private Integer queryClass;
+
+        public String getHostname() {
+            return hostname;
+        }
+
+        public void setHostname(String hostname) {
+            this.hostname = hostname;
+        }
+
+        public Integer getType() {
+            return type;
+        }
+
+        public void setType(Integer type) {
+            this.type = type;
+        }
+
+        public Integer getQueryClass() {
+            return queryClass;
+        }
+
+        public void setQueryClass(Integer queryClass) {
+            this.queryClass = queryClass;
+        }
     }
 
     class Answer extends Question {
-        Long ttl;
-        Integer length;
-        InetAddress address;
-        String canonicalName;
+        private Long ttl;
+        private Integer length;
+        private InetAddress address;
+        private String canonicalName;
+
+        public Long getTtl() {
+            return ttl;
+        }
+
+        public void setTtl(Long ttl) {
+            this.ttl = ttl;
+        }
+
+        public Integer getLength() {
+            return length;
+        }
+
+        public void setLength(Integer length) {
+            this.length = length;
+        }
+
+        public InetAddress getAddress() {
+            return address;
+        }
+
+        public void setAddress(InetAddress address) {
+            this.address = address;
+        }
+
+        public String getCanonicalName() {
+            return canonicalName;
+        }
+
+        public void setCanonicalName(String canonicalName) {
+            this.canonicalName = canonicalName;
+        }
     }
 
     public DNS(ByteBuffer packet) {
@@ -74,14 +131,15 @@ public class DNS {
         answers = new ArrayList<Answer>();
 
         if (noOfAnswer > 0) {
-            for (int i = 0; i < noOfQuestion; i++) {
+            for (int i = 0; i < noOfAnswer; i++) {
                 Answer temp = new Answer();
-                temp.hostname = getHostname();
-                temp.type = get16Bits();
-                temp.queryClass = get16Bits();
-                temp.ttl = get32Bits();
-                temp.length = get16Bits();
-                switch (temp.type) {
+                temp.setHostname(getHostname());
+                temp.setType(get16Bits());
+                temp.setQueryClass(get16Bits());
+                temp.setTtl(get32Bits());
+                temp.setLength(get16Bits());
+                final int type = temp.getType().intValue();
+                switch (type) {
                     case 1: // Host Address
                         try {
                             temp.address = getIPAddress();
@@ -92,6 +150,12 @@ public class DNS {
                     case 5: // CNAME
                         temp.canonicalName = getHostname();
                         break;
+                    case 28: // IPv6 Address
+                        try {
+                            temp.address = getIPv6Address();
+                        } catch (UnknownHostException e) {
+                            Log.e(TAG, e.toString());
+                        }
                 }
                 answers.add(temp);
             }
@@ -104,13 +168,18 @@ public class DNS {
         sb.append("DNS{");
 
         for (Question query : queries) {
-            sb.append(query.hostname);
+            final int type = query.getType().intValue();
+            sb.append(query.hostname + "(Type: " + type + ")");
         }
         sb.append(" ");
 
         for (Answer answer : answers) {
-            if (answer.type == 1) {
-                sb.append(answer.address.getHostAddress());
+            final int type = answer.getType().intValue();
+            if (type == 1 || type == 28) {
+                sb.append(answer.address.getHostAddress() + " ");
+            }
+            else {
+                sb.append("Type: " + type + ", ");
             }
         }
         sb.append("}");
@@ -179,14 +248,27 @@ public class DNS {
     }
 
     private InetAddress getIPAddress() throws UnknownHostException {
-        byte[] fourBytes = new byte[4];
-        for (int i = 0; i < fourBytes.length; i++)
-            fourBytes[i] = (byte) (packet.get() & 0xFF);
+        byte[] addr = new byte[4];
+        for (int i = 0; i < addr.length; i++)
+            addr[i] = (byte) (packet.get() & 0xFF);
 
         try {
-            return InetAddress.getByAddress(fourBytes);
+            return InetAddress.getByAddress(addr);
         } catch (UnknownHostException e) {
             throw new UnknownHostException("IP address is not valid.");
         }
     }
+
+    private InetAddress getIPv6Address() throws UnknownHostException {
+        byte[] addr = new byte[16];
+        for (int i = 0; i < addr.length; i++)
+            addr[i] = (byte) (packet.get() & 0xFF);
+
+        try {
+            return InetAddress.getByAddress(addr);
+        } catch (UnknownHostException e) {
+            throw new UnknownHostException("IP address is not valid.");
+        }
+    }
+
 }
