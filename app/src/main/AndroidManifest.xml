@@ -19,8 +19,6 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <uses-sdk android:minSdkVersion="14"/>
-
     <application android:label="@string/app">
 
         <activity android:name=".ToyVpnClient"
